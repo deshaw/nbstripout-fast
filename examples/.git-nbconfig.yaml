@@ -1,0 +1,8 @@
+# Example git-nbconfig.yaml. Put me at the top level of a repo
+nbstripout_fast:
+  keep_count: true
+  keep_output: true
+  drop_empty_cells: true
+  extra_keys: []
+  keep_keys: []
+

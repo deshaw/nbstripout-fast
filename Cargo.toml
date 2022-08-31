@@ -1,0 +1,21 @@
+[package]
+name = "nbstripout-fast"
+version = "1.0.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+name = "nbstripout_fast"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+pyo3 = { version = "0.16.5", features = ["extension-module"] }
+serde = { version = "1.0.104", features = ["derive"] }
+serde_json = {version = "1.0.48",  features = [
+  "float_roundtrip",
+  "preserve_order",
+] }
+serde_yaml = "0.8"
+clap = { version = "3.0", features = ["derive"] }
+log = "0.4.0"
+env_logger = "0.8.4"

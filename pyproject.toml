@@ -1,0 +1,32 @@
+[build-system]
+requires = ["maturin>=0.13,<0.14"]
+build-backend = "maturin"
+
+[project]
+name = "nbstripout-fast"
+description="Strips outputs from Jupyter notebooks"
+author="Marc Udoff"
+author_email="marc.udoff@deshaw.com"
+url="https://github.com/deshaw/nbstripout-fast"
+requires_python=">=3.9"
+setup_requires=[
+    "pytest-runner",
+    "setuptools >= 30"
+]
+tests_require=[
+    "nbformat",
+    "pytest",
+]
+classifiers=[
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Other Environment",
+    "Framework :: IPython",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Topic :: Software Development :: Version Control",
+    "Programming Language :: Rust",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+]
