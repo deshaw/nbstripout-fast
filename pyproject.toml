@@ -5,6 +5,7 @@ build-backend = "maturin"
 [project]
 name = "nbstripout-fast"
 description="Strips outputs from Jupyter notebooks"
+readme = "README.md"
 author="Marc Udoff"
 author_email="marc.udoff@deshaw.com"
 url="https://github.com/deshaw/nbstripout-fast"
