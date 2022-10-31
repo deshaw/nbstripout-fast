@@ -12,7 +12,6 @@ url="https://github.com/deshaw/nbstripout-fast"
 requires_python=">=3.9"
 setup_requires=[
     "pytest-runner",
-    "setuptools >= 30"
 ]
 tests_require=[
     "nbformat",
@@ -39,3 +38,6 @@ test = [
     "nbconvert",
     "ipykernel",
 ]
+
+[tool.maturin]
+bindings = "bin"
