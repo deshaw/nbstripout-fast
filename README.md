@@ -73,16 +73,22 @@ RUST_LOG=debug cargo run -- '--extra-keys "metadata.bar cell.baz" -t foo.ipynb'
 ```
 
 ## Releasing
-We release only the bin version (i.e. just the CLI). The release
-builds wheels for manylinux. Before doing this, update the version in
-`Cargo.toml`
-```
+
+Manylinux, macos, and windows wheels and sdist are built by github workflows.
+Builds are triggered upon the creation of a pull request, creating a new
+release, or with a manual workflow dispatch. The wheels and sdist are only
+uploaded to PyPI when a new release is published. In order to create a new
+release:
+
+1. Create a commit updating the version in `Cargo.toml`, then create a git tag:
+```bash
 git tag vX.Y.Z
 git push --tags
-
-maturin build -b bin --sdist
-twine upload -r target/wheels/*
 ```
+2. Draft a new release in github; select the tag that you just created.
+3. Once the new release is created, the wheels and sdist will be built by a
+   github workflow and then uploaded to PyPI automatically using the
+   `PYPI_API_TOKEN` in the github secrets for the repository.
 
 ## History
 

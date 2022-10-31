@@ -1,0 +1,31 @@
+name: Run tests
+
+on:
+  pull_request:
+
+jobs:
+  run_tests:
+    name: Run tests
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out the repo
+      uses: actions/checkout@v3
+
+    - name: Set up rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Set up rust cache
+      uses: Swatinem/rust-cache@v2
+
+    - name: Set up python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install nbstripout-fast
+      run: |
+        pip install .[test]
+
+    - name: Run tests
+      run: |
+        pytest ./
