@@ -53,7 +53,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu, macos, windows]
+        os: [ubuntu, windows]
         python-version: ['cp311', 'cp310', 'cp39']
         include:
           - os: ubuntu
@@ -62,9 +62,6 @@ jobs:
           - os: windows
             ls: dir
             pip_cache: ~\AppData\Local\pip\Cache
-          - os: macos
-            arch: 'arm64 universal2'
-            pip_cache: ~/Library/Caches/pip
 
     runs-on: ${{ format('{0}-latest', matrix.os) }}
     steps:
