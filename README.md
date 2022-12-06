@@ -80,7 +80,7 @@ release, or with a manual workflow dispatch. The wheels and sdist are only
 uploaded to PyPI when a new release is published. In order to create a new
 release:
 
-1. Create a commit updating the version in `Cargo.toml`, then create a git tag:
+1. Create a commit updating the version in `Cargo.toml` and `CHANGELOG.md`, then create a git tag:
 ```bash
 git tag vX.Y.Z
 git push --tags
