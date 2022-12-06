@@ -19,3 +19,7 @@ serde_yaml = "0.8"
 clap = { version = "3.0", features = ["derive"] }
 log = "0.4.0"
 env_logger = "0.8.4"
+
+[features]
+default = ["extension-module"]
+extension-module = ["pyo3/extension-module"]

@@ -22,9 +22,19 @@ jobs:
       with:
         python-version: '3.11'
 
-    - name: Install nbstripout-fast
+    - name: Install python dependencies
       run: |
-        pip install .[test]
+        pip install maturin
+        pip install pytest nbformat nbconvert ipykernel
+
+    # Build pyo3 bindings manually, then install with
+    # pip; can't pass args directly through to pip.
+    # Also, maturin can't set the output wheel name, so
+    # we need to find it directly.
+    - name: Install python bindings for nbstripout-fast
+      run: |
+        maturin build -b pyo3 --out wheel
+        pip install $(find ./wheel -name '*.whl' | head -n 1)
 
     - name: Run tests
       run: |
