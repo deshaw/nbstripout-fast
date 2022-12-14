@@ -33,7 +33,7 @@ jobs:
     # we need to find it directly.
     - name: Install python bindings for nbstripout-fast
       run: |
-        maturin build -b pyo3 --out wheel
+        maturin build -b pyo3 --features extension-module --out wheel
         pip install $(find ./wheel -name '*.whl' | head -n 1)
 
     - name: Run tests

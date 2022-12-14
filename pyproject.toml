@@ -41,3 +41,4 @@ test = [
 
 [tool.maturin]
 bindings = "bin"
+no-default-features = true
