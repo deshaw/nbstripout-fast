@@ -161,12 +161,17 @@ fn process_file(
     })?;
     let cleaned_contents = String::from_utf8(ser.into_inner()).map_err(|e| format!("{:?}", e))?;
 
-    if let Some(file) = output_file {
-        fs::write(&file, cleaned_contents)
-            .map_err(|e| format!("Could not write to {:?} due to {:?}", file, e))?;
+    if cleaned_contents != *contents {
+        if let Some(file) = output_file {
+            fs::write(&file, cleaned_contents)
+                .map_err(|e| format!("Could not write to {:?} due to {:?}", file, e))?;
+        } else {
+            println!("{}", cleaned_contents);
+        }
     } else {
-        println!("{}", cleaned_contents);
+        println!("Content unchanged. File not modified.");
     }
+
     Ok(())
 }
 
