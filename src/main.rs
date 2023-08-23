@@ -159,7 +159,12 @@ fn process_file(
             e
         )
     })?;
-    let cleaned_contents = String::from_utf8(ser.into_inner()).map_err(|e| format!("{:?}", e))?;
+    let mut cleaned_contents = String::from_utf8(ser.into_inner()).map_err(|e| format!("{:?}", e))?;
+
+    // Check if the original content ended with a newline and the cleaned content doesn't
+    if contents.ends_with('\n') && !cleaned_contents.ends_with('\n') {
+        cleaned_contents.push('\n'); // Append a newline if necessary
+    }
 
     if cleaned_contents != *contents {
         if let Some(file) = output_file {
