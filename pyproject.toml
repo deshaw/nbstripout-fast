@@ -30,6 +30,8 @@ classifiers=[
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
 ]
+[project.urls]
+homepage = "https://github.com/deshaw/nbstripout-fast"
 
 [project.optional-dependencies]
 test = [

@@ -1,3 +1,8 @@
+## [1.0.2](https://github.com/deshaw/nbstripout-fast/compare/v1.0.1...v1.0.2) (2023-09-18)
+### Fixed
+- Do not overwrite file if contents are identical [#9](https://github.com/deshaw/nbstripout-fast/issues/9)
+- Do not remove last empty line [#8](https://github.com/deshaw/nbstripout-fast/issues/8)
+
 ## [1.0.1](https://github.com/deshaw/nbstripout-fast/compare/v1.0.0...v1.0.1) (2022-12-06)
 ### Fixed
 - Added wheels for Linux/Windows (OSX is pending [this](https://github.com/PyO3/maturin/issues/1080#issuecomment-1330000265))
