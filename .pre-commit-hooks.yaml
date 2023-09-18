@@ -1,0 +1,6 @@
+- id: nbstripout-fast
+  name: nbstripout-fast
+  entry: nbstripout-fast
+  types: [jupyter]
+  language: rust
+  description: "Strip output from Jupyter notebooks (modifies the files in place by default)."

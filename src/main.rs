@@ -16,6 +16,7 @@ use std::env;
 use std::fs;
 use std::io;
 use std::io::BufRead;
+use std::path::PathBuf;
 
 mod stripoutlib;
 
@@ -58,7 +59,7 @@ struct Cli {
     keep_output: bool,
 
     #[clap(long, action)]
-    /// Remove cells where `source` is empty or contains only whitepace
+    /// Remove cells where `source` is empty or contains only whitespace
     drop_empty_cells: bool,
 
     #[clap(short, long, action)]
@@ -79,7 +80,7 @@ struct Cli {
 
     #[clap(parse(from_os_str))]
     /// Files to strip output from
-    files: Vec<std::path::PathBuf>,
+    files: Vec<PathBuf>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -135,7 +136,7 @@ fn process_file(
     keep_count: bool,
     extra_keys: &Vec<String>,
     drop_empty_cells: bool,
-    output_file: Option<std::path::PathBuf>,
+    output_file: Option<PathBuf>,
 ) -> Result<(), String> {
     let mut nb: serde_json::Value = serde_json::from_str(&contents)
         .map_err(|e| format!("JSON was not well-formatted: {:?}", e))?;
@@ -155,18 +156,28 @@ fn process_file(
     let mut ser = serde_json::Serializer::with_formatter(buf, formatter);
     nb.serialize(&mut ser).map_err(|e| {
         format!(
-            "Unable to serialize notebook. Likely an intenral error: {:?}",
+            "Unable to serialize notebook. Likely an internal error: {:?}",
             e
         )
     })?;
-    let cleaned_contents = String::from_utf8(ser.into_inner()).map_err(|e| format!("{:?}", e))?;
+    let mut cleaned_contents = String::from_utf8(ser.into_inner()).map_err(|e| format!("{:?}", e))?;
 
-    if let Some(file) = output_file {
-        fs::write(&file, cleaned_contents)
-            .map_err(|e| format!("Could not write to {:?} due to {:?}", file, e))?;
-    } else {
-        println!("{}", cleaned_contents);
+    // Check if the original content ended with a newline and the cleaned content doesn't
+    if contents.ends_with('\n') && !cleaned_contents.ends_with('\n') {
+        cleaned_contents.push('\n'); // Append a newline if necessary
     }
+
+    if cleaned_contents != *contents {
+        if let Some(file) = output_file {
+            fs::write(&file, cleaned_contents)
+                .map_err(|e| format!("Could not write to {:?} due to {:?}", file, e))?;
+        } else {
+            println!("{}", cleaned_contents);
+        }
+    } else {
+        log::debug!("Content unchanged. File not modified.");
+    }
+
     Ok(())
 }
 
@@ -197,7 +208,7 @@ fn main() -> Result<(), String> {
             }
             if let Some(config_keep_keys) = nbstripout_fast.keep_keys {
                 for key in config_keep_keys {
-                    // Remove all occurances
+                    // Remove all occurrences
                     extra_keys.retain(|x| x != &key);
                 }
             }
