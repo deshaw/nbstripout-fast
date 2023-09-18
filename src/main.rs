@@ -175,7 +175,7 @@ fn process_file(
             println!("{}", cleaned_contents);
         }
     } else {
-        println!("Content unchanged. File not modified.");
+        log::debug!("Content unchanged. File not modified.");
     }
 
     Ok(())
