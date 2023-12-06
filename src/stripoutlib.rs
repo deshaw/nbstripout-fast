@@ -62,6 +62,7 @@ fn determine_keep_output(cell: &JSONMap, default: bool) -> Result<bool, String> 
 }
 
 // TODO: add custom errors instead of returning a string
+#[cfg_attr(not(feature = "extension-module"), allow(unused))]
 pub fn strip_output(
     nb: &mut serde_json::Value,
     keep_output: bool,
