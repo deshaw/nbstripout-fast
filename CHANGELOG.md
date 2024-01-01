@@ -1,3 +1,7 @@
+## [1.0.3](https://github.com/deshaw/nbstripout-fast/compare/v1.0.2...v1.0.3) (2024-01-01)
+### Fixed
+- maxOS Support
+
 ## [1.0.2](https://github.com/deshaw/nbstripout-fast/compare/v1.0.1...v1.0.2) (2023-09-18)
 ### Fixed
 - Do not overwrite file if contents are identical [#9](https://github.com/deshaw/nbstripout-fast/issues/9)
