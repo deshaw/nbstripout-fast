@@ -26,7 +26,7 @@ jobs:
     - name: Set up python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.11'
+        python-version: '3.12'
 
     - name: install python dependencies
       run: pip install -U setuptools wheel twine maturin build
@@ -54,7 +54,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu, windows, macos]
-        python-version: ['cp311', 'cp310', 'cp39']
+        python-version: ['cp312', 'cp311', 'cp310', 'cp39']
         include:
           - os: ubuntu
             platform: linux
@@ -71,7 +71,7 @@ jobs:
     - name: Set up python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.11'
+        python-version: '3.12'
 
     - if: matrix.os == 'macos' || matrix.os == 'windows'
       name: Set up rust toolchain
@@ -95,7 +95,7 @@ jobs:
         rustup target add i686-pc-windows-msvc
 
     - name: Build ${{ matrix.platform || matrix.os }} binaries
-      uses: pypa/cibuildwheel@v2.11.2
+      uses: pypa/cibuildwheel@v2.17.0
       env:
         CIBW_BUILD: '${{ matrix.python-version }}-*'
         # rust doesn't seem to be available for musl linux on i686
