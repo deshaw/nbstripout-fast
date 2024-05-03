@@ -104,7 +104,8 @@ fn find_nbconfig() -> Result<Option<NBConfig>, String> {
     loop {
         let git_dir = dir.as_path().join(".git");
         log::debug!("Looking for .git in {:?}", dir);
-        if git_dir.exists() && git_dir.is_dir() {
+        // We don't check if it is a dir as worktrees use a .git file
+        if git_dir.exists() {
             let nbconfig_path = dir.join(".git-nbconfig.yaml");
             if nbconfig_path.exists() && nbconfig_path.is_file() {
                 let f = std::fs::File::open(nbconfig_path)
