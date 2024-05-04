@@ -26,10 +26,10 @@ jobs:
     - name: Set up python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.11'
+        python-version: '3.12'
 
     - name: install python dependencies
-      run: pip install -U setuptools wheel twine maturin build
+      run: pip install -U setuptools wheel twine maturin build pkginfo>=1.10.0
 
     - name: build sdist
       run: |
@@ -54,7 +54,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu, windows, macos]
-        python-version: ['cp311', 'cp310', 'cp39']
+        python-version: ['cp312', 'cp311', 'cp310', 'cp39']
         include:
           - os: ubuntu
             platform: linux
@@ -71,7 +71,7 @@ jobs:
     - name: Set up python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.11'
+        python-version: '3.12'
 
     - if: matrix.os == 'macos' || matrix.os == 'windows'
       name: Set up rust toolchain
@@ -91,11 +91,12 @@ jobs:
     - if: matrix.os == 'windows'
       name: Add i686-pc-windows-msvc target
       run: |
-        rustup toolchain install stable-i686-pc-windows-msvc
+        # Disable self-update on windows to prevent race condition; see https://github.com/rust-lang/rustup/issues/2441
+        rustup toolchain install stable-i686-pc-windows-msvc --no-self-update
         rustup target add i686-pc-windows-msvc
 
     - name: Build ${{ matrix.platform || matrix.os }} binaries
-      uses: pypa/cibuildwheel@v2.11.2
+      uses: pypa/cibuildwheel@v2.17.0
       env:
         CIBW_BUILD: '${{ matrix.python-version }}-*'
         # rust doesn't seem to be available for musl linux on i686
@@ -113,7 +114,7 @@ jobs:
 
     - name: List and check wheels
       run: |
-        pip install twine
+        pip install twine pkginfo>=1.10.0
         ${{ matrix.ls || 'ls -lh' }} wheelhouse/
         twine check wheelhouse/*
 
