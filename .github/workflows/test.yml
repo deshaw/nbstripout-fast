@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Check out the repo
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Set up rust toolchain
       uses: dtolnay/rust-toolchain@stable
@@ -18,7 +18,7 @@ jobs:
       uses: Swatinem/rust-cache@v2
 
     - name: Set up python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.11'
 
