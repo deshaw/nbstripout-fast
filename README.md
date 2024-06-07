@@ -42,6 +42,46 @@ The table above shows a large overhead per notebook (mostly python startup time)
 When you have 100 or more notebooks, nbstripout takes more than 40s while
 nbstripout-fast takes only 1s!
 
+## Example
+This example illustrates how `nbstripout-fast` can be used to automatically clean Jupyter notebooks using Git filters (see e.g. [Git Attributes](https://git-scm.com/book/en/v2/Customizing-Git-Git-Attributes)). This keeps your repository clean by removing unnecessary output and clutter, while preserving your local working version. The benefits are minimised diffs and reduced repository size.
+
+1. **Install `nbstripout-fast`** as described above.
+2. **Configure nbstripout-fast**
+
+   Create a `.git-nbconfig.yaml` file at the root of your repository to configure `nbstripout-fast`, e.g.
+	```yaml
+	nbstripout_fast:
+	  keep_count: false
+	  keep_output: false
+	  drop_empty_cells: true
+	  extra_keys: []
+	  keep_keys: []
+	```
+3. **Set Git Attributes**
+
+   Create a `.gitattributes` file at the root of your repository if it doesn't yet exist and add this line:
+	```bash
+	*.ipynb filter=jupyter
+	```
+	 This instructs Git to use a custom filter named "jupyter" on all `.ipynb` files.
+4. **Configure the `jupyter` Filter**
+
+   Run these commands in your terminal to configure the "jupyter" filter:
+	```bash
+	git config filter.jupyter.clean nbstripout-fast
+	git config filter.jupyter.smudge cat
+	```
+- `clean`: This filter runs `nbstripout-fast` when adding notebooks to the version that is checked out, i.e. the clean version.
+- `smudge`: This filter runs `cat` when checking out notebooks, ensuring your local (smudged) version remains unmodified.
+  Git filters transform files at the time of checkout and commit.
+4. **Reapply Cleaning to Existing Notebooks (Optional)**
+
+   If you already have Jupyter notebooks tracked by Git, you can reapply the cleaning process to them:
+	```bash
+	git add --renormalize . git commit -m "Cleaned Jupyter notebooks"
+	```
+
+
 ## Developing
 You can use cargo which will build + run the CLI:
 ```
