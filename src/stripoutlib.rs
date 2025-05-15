@@ -58,7 +58,30 @@ fn determine_keep_output(cell: &JSONMap, default: bool) -> Result<bool, String> 
         return Ok(keep_output_metadata || has_keep_output_tag);
     }
 
-    Ok(default)
+    let has_useless_widget = cell
+        .get("outputs")
+        .and_then(|value| value.as_array())
+        .map(|objs| {
+            objs.iter().any(|obj| {
+                let is_execute_result = obj.get("output_type")
+                    .and_then(|output_type| output_type.as_str()) == Some("execute_result");
+
+                let is_widget = obj.get("data")
+                    .and_then(|data| data.get("application/vnd.jupyter.widget-view+json")).is_some();
+
+                let is_useless = obj.get("text/plain")
+                    .and_then(|text_obj| text_obj.as_array())
+                    .and_then(|arr| arr.first())
+                    .and_then(|item| item.as_str())
+                    .map(|text| text.contains("Output()"))
+                    .unwrap_or(false);
+
+                is_execute_result && is_widget && is_useless
+            })
+        })
+        .unwrap_or(false);
+
+    Ok(has_useless_widget || default)
 }
 
 // TODO: add custom errors instead of returning a string
