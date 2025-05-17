@@ -33,6 +33,8 @@ def create_notebook():
         nbformat.v4.new_markdown_cell("## A section"),
         nbformat.v4.new_code_cell(""),
         nbformat.v4.new_code_cell("x += 3\nx"),
+        nbformat.v4.new_code_cell("from ipywidgets import Output; o = Output(); o"),
+        nbformat.v4.new_code_cell("with o: print('hi')"),
     ]
     return nb
 
@@ -88,7 +90,7 @@ def test_keep_output():
     assert all(
         cell.get("execution_count", None) is None for cell in stripped_notebook.cells
     )
-    assert len(stripped_notebook.cells[-1]["outputs"]) == 1
+    assert len(stripped_notebook.cells[-3]["outputs"]) == 1
 
 
 def test_keep_count():
@@ -96,14 +98,14 @@ def test_keep_count():
 
     assert all(len(cell.get("outputs", [])) == 0 for cell in stripped_notebook.cells)
     # A bit harder than all as cells without source don't have counts
-    assert stripped_notebook.cells[-1]["execution_count"] == 3
+    assert stripped_notebook.cells[-3]["execution_count"] == 3
 
 
 def test_drop_empty_cells():
     stripped_notebook = _stripout_helper(executed_nb, drop_empty_cells=True)
 
     copied_nb = deepcopy(clean_nb)
-    copied_nb.cells.pop(-2)  # The empty cell
+    copied_nb.cells.pop(-4)  # The empty cell
     copied_nb
     assert copied_nb == stripped_notebook
 
@@ -140,6 +142,13 @@ def test_source_as_strings():
     )
 
     copied_nb = deepcopy(clean_nb)
-    copied_nb.cells.pop(-2)  # The empty cell
+    copied_nb.cells.pop(-4)  # The empty cell
     copied_nb
     assert copied_nb == stripped_notebook
+
+
+def test_useless_widget_stripped():
+    """Check that useless ipywidget outputs get stripped."""
+    stripped_notebook = _stripout_helper(executed_nb)
+    assert len(executed_nb.cells[-2].outputs) > 0
+    assert len(stripped_notebook.cells[-2].outputs) == 0
