@@ -1,8 +1,10 @@
-from nbstripout_fast import stripout
-import nbformat
-from nbconvert.preprocessors import ExecutePreprocessor
-from copy import deepcopy
 import json
+from copy import deepcopy
+
+import nbformat
+import pytest
+from nbconvert.preprocessors import ExecutePreprocessor
+from nbstripout_fast import stripout
 
 # Copied from main.rs
 DEFAULT_EXTRA_KEYS = [
@@ -53,6 +55,7 @@ def _stripout_helper(
     keep_count=False,
     extra_keys=None,
     drop_empty_cells=False,
+    widget_regex=None,
 ):
     if extra_keys is None:
         extra_keys = DEFAULT_EXTRA_KEYS
@@ -62,6 +65,7 @@ def _stripout_helper(
         keep_count=keep_count,
         extra_keys=extra_keys,
         drop_empty_cells=drop_empty_cells,
+        widget_regex=widget_regex,
     )
     return nbformat.v4.reads(content)
 
@@ -147,7 +151,32 @@ def test_source_as_strings():
     assert copied_nb == stripped_notebook
 
 
-def test_useless_widget_stripped():
+@pytest.mark.parametrize(
+    ("widget_regex", "is_stripped"),
+    [
+        (None, True),
+        ("Output()", True),
+        ("Output", True),
+        ("Output.*", True),
+        ("what?", False),
+        ("utput.*", True),
+        (".*utput.*", True),
+        ("put*", True),
+        (".*put.*", True),
+        ("put()", True),
+        ("put()$", True),
+        ("^put()$", False),
+        ("Output$", False),
+    ]
+)
+def test_useless_widget_stripped(widget_regex, is_stripped):
+    """Check that useless ipywidget outputs get stripped."""
+    stripped_notebook = _stripout_helper(executed_nb, widget_regex=widget_regex)
+    assert len(executed_nb.cells[-2].outputs) > 0
+    assert len(stripped_notebook.cells[-2].outputs) == 0 if is_stripped else 1
+
+
+def test_useless_widget_stripped_no_regex():
     """Check that useless ipywidget outputs get stripped."""
     stripped_notebook = _stripout_helper(executed_nb)
     assert len(executed_nb.cells[-2].outputs) > 0

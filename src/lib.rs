@@ -17,7 +17,7 @@ mod python {
         keep_count: bool,
         extra_keys: Vec<String>,
         drop_empty_cells: bool,
-        widget_regex: String,
+        widget_regex: Option<String>,
     ) -> PyResult<String> {
         // If rust ever comes up with a PyObject to serde we should accept a
         // notebook object instead. This is cheap and mostly used for testing
@@ -31,7 +31,7 @@ mod python {
             keep_count,
             &extra_keys,
             drop_empty_cells,
-            &widget_regex,
+            &widget_regex.unwrap_or_else(|| "^Output();?$".to_string()),
         )
         .map_err(PyRuntimeError::new_err)?;
 
