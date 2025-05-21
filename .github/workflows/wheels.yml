@@ -29,7 +29,7 @@ jobs:
         python-version: '3.12'
 
     - name: install python dependencies
-      run: pip install -U setuptools wheel twine maturin build pkginfo>=1.10.0
+      run: pip install -U setuptools wheel twine maturin build
 
     - name: build sdist
       run: |
@@ -49,7 +49,6 @@ jobs:
   build_wheels:
     name: >
       build ${{ matrix.python-version }} on ${{ matrix.platform || matrix.os }}
-      ${{ (matrix.arch) || '' }}
     strategy:
       fail-fast: false
       matrix:
@@ -80,8 +79,6 @@ jobs:
     - if: matrix.os == 'macos' || matrix.os == 'windows'
       name: Set up rust cache
       uses: Swatinem/rust-cache@v2
-      with:
-        key: ${{ matrix.arch }}
 
     # Set up rust toolchain on mac os and windows (linux containers handled below)
     - if: matrix.os == 'macos'
@@ -96,13 +93,13 @@ jobs:
         rustup target add i686-pc-windows-msvc
 
     - name: Build ${{ matrix.platform || matrix.os }} binaries
-      uses: pypa/cibuildwheel@v2.17.0
+      uses: pypa/cibuildwheel@v2.23.1
       env:
         CIBW_BUILD: '${{ matrix.python-version }}-*'
         # rust doesn't seem to be available for musl linux on i686
         CIBW_SKIP: '*-musllinux_i686'
         # we build for matrix.arch (only exists on macos), else 'auto'
-        CIBW_ARCHS: ${{ matrix.arch || 'auto' }}
+        CIBW_ARCHS: 'auto'
         CIBW_ENVIRONMENT: 'PATH="$HOME/.cargo/bin:$PATH" CARGO_TERM_COLOR="always"'
         CIBW_ENVIRONMENT_WINDOWS: 'PATH="$UserProfile\.cargo\bin;$PATH"'
         CIBW_BEFORE_BUILD: rustup show
@@ -114,7 +111,7 @@ jobs:
 
     - name: List and check wheels
       run: |
-        pip install twine pkginfo>=1.10.0
+        pip install twine
         ${{ matrix.ls || 'ls -lh' }} wheelhouse/
         twine check wheelhouse/*
 
@@ -147,6 +144,6 @@ jobs:
           ls -lAs wheels/
 
       - name: Upload to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1.8
+        uses: pypa/gh-action-pypi-publish@release/v1.12
         with:
           packages_dir: wheels/
