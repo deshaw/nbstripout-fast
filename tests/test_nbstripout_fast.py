@@ -177,7 +177,7 @@ def test_useless_widget_stripped(widget_regex, is_stripped):
 
 
 def test_useless_widget_stripped_no_regex():
-    """Check that useless ipywidget outputs get stripped."""
+    """Check that useless ipywidget outputs get stripped if no regex is specified."""
     stripped_notebook = _stripout_helper(executed_nb)
     assert len(executed_nb.cells[-2].outputs) > 0
     assert len(stripped_notebook.cells[-2].outputs) == 0

@@ -25,7 +25,7 @@ jobs:
     - name: Install python dependencies
       run: |
         pip install maturin
-        pip install pytest nbformat nbconvert ipykernel
+        pip install pytest nbformat nbconvert ipykernel ipywidgets
 
     # Build pyo3 bindings manually, then install with
     # pip; can't pass args directly through to pip.
