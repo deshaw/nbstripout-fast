@@ -1,5 +1,6 @@
 // This code is nearly a 1:1 mapping of https://github.com/kynan/nbstripout/blob/master/nbstripout/_utils.py
 use log;
+use regex::Regex;
 use serde_json::json;
 use std::borrow::Borrow;
 
@@ -29,7 +30,11 @@ fn pop_recursive(d: &mut serde_json::Value, key: &str) {
 
 // Should we keep the output of a given cell?
 // If the cell contains keep_output in the metadata or tag metadata
-fn determine_keep_output(cell: &JSONMap, default: bool) -> Result<bool, String> {
+//
+// If a cell with widget output is given, the regex is matched against the
+// cell's text/plain output; if a match is found, the cell's output will
+// not be kept.
+fn determine_keep_output(cell: &JSONMap, default: bool, widget_regex: &Regex) -> Result<bool, String> {
     if !cell.contains_key("metadata") {
         return Ok(default);
     }
@@ -58,7 +63,30 @@ fn determine_keep_output(cell: &JSONMap, default: bool) -> Result<bool, String> 
         return Ok(keep_output_metadata || has_keep_output_tag);
     }
 
-    Ok(default)
+    let has_useless_widget = cell
+        .get("outputs")
+        .and_then(|value| value.as_array())
+        .map(|objs| {
+            objs.iter().any(|obj| {
+                let is_execute_result = obj.get("output_type")
+                    .and_then(|output_type| output_type.as_str()) == Some("execute_result");
+
+                let is_widget = obj.get("data")
+                    .and_then(|data| data.get("application/vnd.jupyter.widget-view+json")).is_some();
+
+                let is_useless = obj.get("text/plain")
+                    .and_then(|text_obj| text_obj.as_array())
+                    .and_then(|arr| arr.first())
+                    .and_then(|item| item.as_str())
+                    .map(|text| widget_regex.is_match(text))
+                    .unwrap_or(false);
+
+                is_execute_result && is_widget && is_useless
+            })
+        })
+        .unwrap_or(false);
+
+    Ok(has_useless_widget || default)
 }
 
 // TODO: add custom errors instead of returning a string
@@ -69,6 +97,7 @@ pub fn strip_output(
     keep_count: bool,
     extra_keys: &Vec<String>,
     drop_empty_cells: bool,
+    widget_regex: &str,
 ) -> Result<bool, String> {
     log::debug!(
         "keep-output: {}, keep-count: {}, extra-keys: {:?}, drop-empty-cells: {}",
@@ -79,6 +108,12 @@ pub fn strip_output(
     );
     let mut metadata_keys = Vec::<String>::new();
     let mut cell_keys = Vec::<String>::new();
+    let widget_regex_obj = match Regex::new(widget_regex) {
+        Ok(reg) => reg,
+        Err(_err) => {
+            return Err(format!("Unable to compile regex from the specified string: {}", widget_regex))
+        }
+    };
 
     let empty_json: serde_json::Value = serde_json::json!({});
     let notebook_metadata = nb
@@ -156,7 +191,7 @@ pub fn strip_output(
                 continue;
             }
             let cell = cell_object.as_object_mut().expect("Cell must be an object");
-            let keep_output_this_cell_option = determine_keep_output(cell, keep_output);
+            let keep_output_this_cell_option = determine_keep_output(cell, keep_output, &widget_regex_obj);
             let keep_output_this_cell = keep_output_this_cell_option?;
 
             if cell.contains_key("outputs") {
