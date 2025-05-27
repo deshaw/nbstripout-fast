@@ -1,8 +1,10 @@
-from nbstripout_fast import stripout
-import nbformat
-from nbconvert.preprocessors import ExecutePreprocessor
-from copy import deepcopy
 import json
+from copy import deepcopy
+
+import nbformat
+import pytest
+from nbconvert.preprocessors import ExecutePreprocessor
+from nbstripout_fast import stripout
 
 # Copied from main.rs
 DEFAULT_EXTRA_KEYS = [
@@ -33,6 +35,8 @@ def create_notebook():
         nbformat.v4.new_markdown_cell("## A section"),
         nbformat.v4.new_code_cell(""),
         nbformat.v4.new_code_cell("x += 3\nx"),
+        nbformat.v4.new_code_cell("from ipywidgets import Output; o = Output(); o"),
+        nbformat.v4.new_code_cell("with o: print('hi')"),
     ]
     return nb
 
@@ -51,6 +55,7 @@ def _stripout_helper(
     keep_count=False,
     extra_keys=None,
     drop_empty_cells=False,
+    widget_regex=None,
 ):
     if extra_keys is None:
         extra_keys = DEFAULT_EXTRA_KEYS
@@ -60,6 +65,7 @@ def _stripout_helper(
         keep_count=keep_count,
         extra_keys=extra_keys,
         drop_empty_cells=drop_empty_cells,
+        widget_regex=widget_regex,
     )
     return nbformat.v4.reads(content)
 
@@ -88,7 +94,7 @@ def test_keep_output():
     assert all(
         cell.get("execution_count", None) is None for cell in stripped_notebook.cells
     )
-    assert len(stripped_notebook.cells[-1]["outputs"]) == 1
+    assert len(stripped_notebook.cells[-3]["outputs"]) == 1
 
 
 def test_keep_count():
@@ -96,14 +102,14 @@ def test_keep_count():
 
     assert all(len(cell.get("outputs", [])) == 0 for cell in stripped_notebook.cells)
     # A bit harder than all as cells without source don't have counts
-    assert stripped_notebook.cells[-1]["execution_count"] == 3
+    assert stripped_notebook.cells[-3]["execution_count"] == 3
 
 
 def test_drop_empty_cells():
     stripped_notebook = _stripout_helper(executed_nb, drop_empty_cells=True)
 
     copied_nb = deepcopy(clean_nb)
-    copied_nb.cells.pop(-2)  # The empty cell
+    copied_nb.cells.pop(-4)  # The empty cell
     copied_nb
     assert copied_nb == stripped_notebook
 
@@ -140,6 +146,38 @@ def test_source_as_strings():
     )
 
     copied_nb = deepcopy(clean_nb)
-    copied_nb.cells.pop(-2)  # The empty cell
+    copied_nb.cells.pop(-4)  # The empty cell
     copied_nb
     assert copied_nb == stripped_notebook
+
+
+@pytest.mark.parametrize(
+    ("widget_regex", "is_stripped"),
+    [
+        (None, True),
+        ("Output()", True),
+        ("Output", True),
+        ("Output.*", True),
+        ("what?", False),
+        ("utput.*", True),
+        (".*utput.*", True),
+        ("put*", True),
+        (".*put.*", True),
+        ("put()", True),
+        ("put()$", True),
+        ("^put()$", False),
+        ("Output$", False),
+    ]
+)
+def test_useless_widget_stripped(widget_regex, is_stripped):
+    """Check that useless ipywidget outputs get stripped."""
+    stripped_notebook = _stripout_helper(executed_nb, widget_regex=widget_regex)
+    assert len(executed_nb.cells[-2].outputs) > 0
+    assert len(stripped_notebook.cells[-2].outputs) == 0 if is_stripped else 1
+
+
+def test_useless_widget_stripped_no_regex():
+    """Check that useless ipywidget outputs get stripped if no regex is specified."""
+    stripped_notebook = _stripout_helper(executed_nb)
+    assert len(executed_nb.cells[-2].outputs) > 0
+    assert len(stripped_notebook.cells[-2].outputs) == 0

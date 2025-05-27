@@ -41,6 +41,7 @@ test = [
     "nbformat",
     "nbconvert",
     "ipykernel",
+    "ipywidgets",
 ]
 
 [tool.maturin]
