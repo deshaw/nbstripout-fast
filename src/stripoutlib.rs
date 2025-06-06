@@ -28,20 +28,35 @@ fn pop_recursive(d: &mut serde_json::Value, key: &str) {
     }
 }
 
-// Should we keep the output of a given cell?
-// If the cell contains keep_output in the metadata or tag metadata
-//
-// If a cell with widget output is given, the regex is matched against the
-// cell's text/plain output; if a match is found, the cell's output will
-// not be kept.
-fn determine_keep_output(cell: &JSONMap, default: bool, widget_regex: &Regex) -> Result<bool, String> {
-    if !cell.contains_key("metadata") {
-        return Ok(default);
-    }
-    let metadata = match cell["metadata"].as_object() {
-        Some(x) => x,
-        None => return Ok(default),
+/// Should we keep the output of a given cell?
+/// - If the cell contains keep_output in the metadata or tag metadata
+///
+/// - If a cell with widget output is given, the regex is matched against the
+///   cell's text/plain output; if a match is found, the cell's output will
+///   not be kept.
+///
+/// * `cell`: Contents of a cell
+/// * `default`: Whether to keep cell output or not by default
+/// * `widget_regex`: Regex to use to determine whether output should be stripped
+fn determine_keep_output(cell: &JSONMap, default: bool, widget_regex: &Regex) -> Result<Vec<bool>, String> {
+
+    // Generate a vector with the same length as cell["outputs"],
+    // filled with the given value
+    let make_filled_output = |value: bool| -> Result<Vec<bool>, String> {
+        cell.get("outputs")
+            .and_then(|outputs| outputs.as_array())
+            .map(|arr| arr.iter().map(|_| value).collect())
+            .ok_or("Could not determine number of outputs.".to_string())
     };
+
+    // If there's a metadata key, retrieve the JSON object. Otherwise exit out, and follow
+    // the default clear behavior for all cell outputs
+    let metadata = match cell.get("metadata").and_then(|value| value.as_object()) {
+        Some(obj) => obj,
+        None => return make_filled_output(default)
+
+    };
+
     let has_keep_output_metadata = metadata.contains_key("keep_output");
     let keep_output_metadata =
         has_keep_output_metadata && metadata["keep_output"].as_bool().unwrap_or(false);
@@ -59,34 +74,35 @@ fn determine_keep_output(cell: &JSONMap, default: bool, widget_regex: &Regex) ->
         ));
     }
 
+    // If either the cell tags or the cell metadata indicate that the output should
+    // be kept, exit out and keep all the outputs
     if has_keep_output_metadata || has_keep_output_tag {
-        return Ok(keep_output_metadata || has_keep_output_tag);
+        return make_filled_output(true);
     }
 
-    let has_useless_widget = cell
-        .get("outputs")
+    // Otherwise iterate through the outputs for the cell, throwing away those that
+    // have an output that matches the given regex.
+    cell.get("outputs")
         .and_then(|value| value.as_array())
-        .map(|objs| {
-            objs.iter().any(|obj| {
-                let is_execute_result = obj.get("output_type")
-                    .and_then(|output_type| output_type.as_str()) == Some("execute_result");
+        .map(|outputs| {
+            outputs.iter().map(|obj| {
+                // let is_execute_result = obj.get("output_type")
+                //     .and_then(|output_type| output_type.as_str()) == Some("execute_result");
 
                 let is_widget = obj.get("data")
                     .and_then(|data| data.get("application/vnd.jupyter.widget-view+json")).is_some();
 
-                let is_useless = obj.get("text/plain")
+                let matches_regex = obj.get("text/plain")
                     .and_then(|text_obj| text_obj.as_array())
-                    .and_then(|arr| arr.first())
-                    .and_then(|item| item.as_str())
-                    .map(|text| widget_regex.is_match(text))
+                    .map(|arr| arr.iter().map(|line| line.as_str().unwrap_or("")).collect())
+                    .map(|text_arr: Vec<&str>| text_arr.join(""))
+                    .map(|text| widget_regex.is_match(&text))
                     .unwrap_or(false);
 
-                is_execute_result && is_widget && is_useless
-            })
+                !(is_widget && matches_regex) && default
+            }).collect()
         })
-        .unwrap_or(false);
-
-    Ok(has_useless_widget || default)
+        .ok_or("Could not get cell outputs.".to_string())
 }
 
 // TODO: add custom errors instead of returning a string
@@ -191,16 +207,22 @@ pub fn strip_output(
                 continue;
             }
             let cell = cell_object.as_object_mut().expect("Cell must be an object");
-            let keep_output_this_cell_option = determine_keep_output(cell, keep_output, &widget_regex_obj);
-            let keep_output_this_cell = keep_output_this_cell_option?;
 
             if cell.contains_key("outputs") {
+                // Must come before `let outputs = ...` to avoid borrowing an immutable reference
+                // and a mutable reference from the same object simultaneously
+                let keep = determine_keep_output(cell, keep_output, &widget_regex_obj)?;
+
                 let outputs = cell["outputs"]
                     .as_array_mut()
                     .expect("Outputs must be an array");
-                //  Default behavior (max_size == 0) strips all outputs.
-                if !keep_output_this_cell {
+
+                // Default behavior (max_size == 0) strips all outputs.
+                if keep.is_empty() {
                     outputs.clear();
+                } else {
+                    let mut keep_iter = keep.iter();
+                    outputs.retain(|_| *keep_iter.next().unwrap());
                 }
 
                 // Strip the counts from the outputs that were kept if not keep_count.
