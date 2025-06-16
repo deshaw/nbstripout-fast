@@ -141,7 +141,7 @@ fn process_file(
     keep_count: bool,
     extra_keys: &Vec<String>,
     drop_empty_cells: bool,
-    strip_regex: &str,
+    strip_regex: Option<&str>,
     output_file: Option<PathBuf>,
 ) -> Result<(), String> {
     let mut nb: serde_json::Value = serde_json::from_str(&contents)
@@ -196,7 +196,7 @@ fn main() -> Result<(), String> {
     let mut keep_output = false;
     let mut keep_count = false;
     let mut drop_empty_cells = false;
-    let strip_regex = args.widget_regex.unwrap_or("Output()".to_string());
+    let strip_regex = args.strip_regex.as_deref();
 
     let mut extra_keys: Vec<String> = vec![];
     for key in DEFAULT_EXTRA_KEYS {
@@ -272,7 +272,7 @@ fn main() -> Result<(), String> {
             keep_count,
             &extra_keys,
             drop_empty_cells,
-            &strip_regex,
+            strip_regex,
             None,
         )?;
     } else {
@@ -293,7 +293,7 @@ fn main() -> Result<(), String> {
                 keep_count,
                 &extra_keys,
                 drop_empty_cells,
-                &strip_regex,
+                strip_regex,
                 output_file,
             )?;
         }

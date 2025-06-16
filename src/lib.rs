@@ -31,7 +31,7 @@ mod python {
             keep_count,
             &extra_keys,
             drop_empty_cells,
-            &strip_regex.unwrap_or_else(|| "^Output();?$".to_string()),
+            strip_regex.as_deref(),
         )
         .map_err(PyRuntimeError::new_err)?;
 
