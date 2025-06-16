@@ -37,8 +37,8 @@ fn pop_recursive(d: &mut serde_json::Value, key: &str) {
 ///
 /// * `cell`: Contents of a cell
 /// * `default`: Whether to keep cell output or not by default
-/// * `widget_regex`: Regex to use to determine whether output should be stripped
-fn determine_keep_output(cell: &JSONMap, default: bool, widget_regex: &Regex) -> Result<Vec<bool>, String> {
+/// * `strip_regex`: Regex to use to determine whether output should be stripped
+fn determine_keep_output(cell: &JSONMap, default: bool, strip_regex: &Regex) -> Result<Vec<bool>, String> {
 
     // Generate a vector with the same length as cell["outputs"],
     // filled with the given value
@@ -96,7 +96,7 @@ fn determine_keep_output(cell: &JSONMap, default: bool, widget_regex: &Regex) ->
                     .and_then(|text_obj| text_obj.as_array())
                     .map(|arr| arr.iter().map(|line| line.as_str().unwrap_or("")).collect())
                     .map(|text_arr: Vec<&str>| text_arr.join(""))
-                    .map(|text| widget_regex.is_match(&text))
+                    .map(|text| strip_regex.is_match(&text))
                     .unwrap_or(false);
 
                 !(is_widget && matches_regex) && default
@@ -113,7 +113,7 @@ pub fn strip_output(
     keep_count: bool,
     extra_keys: &Vec<String>,
     drop_empty_cells: bool,
-    widget_regex: &str,
+    strip_regex: &str,
 ) -> Result<bool, String> {
     log::debug!(
         "keep-output: {}, keep-count: {}, extra-keys: {:?}, drop-empty-cells: {}",
@@ -124,10 +124,10 @@ pub fn strip_output(
     );
     let mut metadata_keys = Vec::<String>::new();
     let mut cell_keys = Vec::<String>::new();
-    let widget_regex_obj = match Regex::new(widget_regex) {
+    let strip_regex_obj = match Regex::new(widget_regex) {
         Ok(reg) => reg,
         Err(_err) => {
-            return Err(format!("Unable to compile regex from the specified string: {}", widget_regex))
+            return Err(format!("Unable to compile regex from the specified string: {}", strip_regex))
         }
     };
 
@@ -211,7 +211,7 @@ pub fn strip_output(
             if cell.contains_key("outputs") {
                 // Must come before `let outputs = ...` to avoid borrowing an immutable reference
                 // and a mutable reference from the same object simultaneously
-                let keep = determine_keep_output(cell, keep_output, &widget_regex_obj)?;
+                let keep = determine_keep_output(cell, keep_output, &strip_regex_obj)?;
 
                 let outputs = cell["outputs"]
                     .as_array_mut()

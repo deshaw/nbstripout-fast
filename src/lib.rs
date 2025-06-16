@@ -10,14 +10,14 @@ mod python {
 
     /// Strips output from a notebook (string) and returns back a notebook (string)
     #[pyfunction]
-    #[pyo3(signature = (contents, keep_output, keep_count, extra_keys, drop_empty_cells, widget_regex = "^Output();?$".to_string()))]
+    #[pyo3(signature = (contents, keep_output, keep_count, extra_keys, drop_empty_cells, strip_regex = "^Output();?$".to_string()))]
     fn stripout(
         contents: String,
         keep_output: bool,
         keep_count: bool,
         extra_keys: Vec<String>,
         drop_empty_cells: bool,
-        widget_regex: Option<String>,
+        strip_regex: Option<String>,
     ) -> PyResult<String> {
         // If rust ever comes up with a PyObject to serde we should accept a
         // notebook object instead. This is cheap and mostly used for testing
@@ -31,7 +31,7 @@ mod python {
             keep_count,
             &extra_keys,
             drop_empty_cells,
-            &widget_regex.unwrap_or_else(|| "^Output();?$".to_string()),
+            &strip_regex.unwrap_or_else(|| "^Output();?$".to_string()),
         )
         .map_err(PyRuntimeError::new_err)?;
 
