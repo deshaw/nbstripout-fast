@@ -183,3 +183,6 @@ Cargo.lock
 
 # End of https://www.toptal.com/developers/gitignore/api/python,rust
 .python-version
+
+# Ignore wheels built by maturin
+wheel/
