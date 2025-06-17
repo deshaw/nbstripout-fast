@@ -202,7 +202,7 @@ def test_no_regex(keep_output):
     """Check that outputs get stripped if no regex is specified."""
     stripped_notebook = _stripout_helper(executed_nb, keep_output=keep_output)
     assert len(executed_nb.cells[-2].outputs) > 0
-    assert len(stripped_notebook.cells[-2].outputs) == 1 if keep_output else 0
+    assert len(stripped_notebook.cells[-2].outputs) == (1 if keep_output else 0)
 
 
 @pytest.mark.parametrize(

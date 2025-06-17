@@ -29,11 +29,12 @@ fn pop_recursive(d: &mut serde_json::Value, key: &str) {
 }
 
 /// Should we keep the output of a given cell?
-/// - If the cell contains keep_output in the metadata or tag metadata
 ///
-/// - If the regex is specified, it will be matched against the cell's
-///   "text/plain" or "text" output; if a match is found, the cell's output will
-///   be discarded.
+/// If the regex is specified, it will be matched against the cell's
+/// "text/plain" or "text" output; if a match is found, the cell's output will
+/// be discarded unconditionally. If no match is found, the cell output will
+/// only be kept if `keep_output` is in the cell metadata or tags, or if
+/// the default is to keep it.
 ///
 /// * `cell`: Contents of a cell
 /// * `default`: Whether to keep cell output or not by default
@@ -107,10 +108,12 @@ fn determine_keep_output(cell: &JSONMap, default: bool, strip_regex: Option<&Reg
     }
 }
 
-/// If a regex is specified, return true if it matches the output, and false otherwise.
-/// If a regex is not specified, return None.
+/// If a regex is specified, return true if it matches the output and false otherwise.
 ///
-/// * `output`: Output map with text content to be matched against the regex
+/// See https://nbformat.readthedocs.io/en/latest/format_description.html for the
+/// notebook file spec.
+///
+/// * `output`: Cell output map with text content to be matched against the regex
 /// * `strip_regex`: Regex to match the output against
 fn output_matches_regex(
     output: &JSONMap,
@@ -171,10 +174,6 @@ pub fn strip_output(
     );
     let mut metadata_keys = Vec::<String>::new();
     let mut cell_keys = Vec::<String>::new();
-
-    let strip_regex_obj = strip_regex
-        .map(|s| Regex::new(s).map_err(|_| format!("'{}' is not a valid regex.", s)))
-        .transpose()?;
 
     let empty_json: serde_json::Value = serde_json::json!({});
     let notebook_metadata = nb
@@ -245,6 +244,10 @@ pub fn strip_output(
             });
         }
 
+        let strip_regex_obj = strip_regex
+            .map(|s| Regex::new(s).map_err(|_| format!("'{}' is not a valid regex.", s)))
+            .transpose()?;
+
         // Clean up each cell as required
         for cell_object in cells {
             if !cell_object.is_object() {
@@ -255,7 +258,7 @@ pub fn strip_output(
 
             if cell.contains_key("outputs") {
                 // Must come before `let outputs = ...` to avoid borrowing an immutable reference
-                // and a mutable reference from the same object simultaneously
+                // and a mutable reference to `cell` simultaneously
                 let keep = determine_keep_output(cell, keep_output, strip_regex_obj.as_ref())?;
 
                 let outputs = cell["outputs"]

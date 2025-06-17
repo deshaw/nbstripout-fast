@@ -79,7 +79,7 @@ struct Cli {
     ignore_git_nb_config: bool,
 
     #[clap(long, action)]
-    /// Specify a regex to use to strip output that matches the regex
+    /// Specify a regex to use to strip matching output
     strip_regex: Option<String>,
 
     #[clap(parse(from_os_str))]
