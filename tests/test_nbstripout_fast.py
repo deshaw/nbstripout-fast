@@ -213,24 +213,40 @@ def test_no_regex(keep_output):
     ]
 )
 @pytest.mark.parametrize(
-    ("strip_regex", "regex_matches"),
+    ("strip_regex", "n_outputs_matched"),
     [
-        (None, False),
-        (r"Output\(\)", True),
-        (r"Output", True),
-        (r"Output.*", True),
-        (r"what?", False),
-        (r"utput.*", True),
-        (r".*utput.*", True),
-        (r"put*", True),
-        (r".*put.*", True),
-        (r"put\(\)", True),
-        (r"put\(\)$", True),
-        (r"^put\(\)$", False),
-        (r"Output$", False),
+        (None, [0, 0, 0, 0]),
+        (r"Output\(\)", [0, 0, 1, 1]),
+        (r"Output", [0, 0, 1, 1]),
+        (r"Output.*", [0, 0, 1, 1]),
+        (r"what?", [0, 0, 0, 0]),
+        (r"utput.*", [0, 0, 1, 1]),
+        (r".*utput.*", [0, 0, 1, 1]),
+        (r"put*", [0, 0, 1, 1]),
+        (r".*put.*", [0, 0, 1, 1]),
+        (r"put\(\)", [0, 0, 1, 1]),
+        (r"put\(\)$", [0, 0, 1, 1]),
+        (r"^put\(\)$", [0, 0, 0, 0]),
+        (r"Output$", [0, 0, 0, 0]),
+        (r"100%", [0, 1, 0, 0]), # the tqdm percentage
+        (r"[06]/6", [0, 1, 1, 0]),  # the tqdm counter 0/6 and 6/6
     ]
 )
-def test_regex2(strip_regex, regex_matches, keep_output, widget_notebook):
-    stripped = _stripout_helper(widget_notebook, strip_regex=strip_regex)
-    breakpoint()
-    assert 0
+def test_regex2(strip_regex, n_outputs_matched, keep_output, widget_notebook):
+    """Test that stripping via regex targets individual outputs, not output groups."""
+    stripped = _stripout_helper(
+        widget_notebook, strip_regex=strip_regex, keep_output=keep_output
+    )
+
+    # Check that the original notebook contains expected outputs
+    n_outputs = [0, 1, 2, 2]
+    for i, n_output in enumerate(n_outputs):
+        assert len(widget_notebook['cells'][i]['outputs']) == n_output
+
+    # If keep_output == True, all outputs will be kept except those targeted
+    # by the regex. Otherwise, all outputs get stripped regardless of whether
+    # they are hit by the regex or not.
+    for i, (n_output, n_matched) in enumerate(zip(n_outputs, n_outputs_matched)):
+        assert len(stripped["cells"][i]["outputs"]) == (
+            n_output - n_matched if keep_output else 0
+        )
