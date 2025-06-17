@@ -205,6 +205,32 @@ def test_no_regex(keep_output):
     assert len(stripped_notebook.cells[-2].outputs) == 1 if keep_output else 0
 
 
-def test_regex_stripped2(widget_notebook):
-    stripped = _stripout_helper(widget_notebook)
-    pass
+@pytest.mark.parametrize(
+    "keep_output",
+    [
+        True,
+        False,
+    ]
+)
+@pytest.mark.parametrize(
+    ("strip_regex", "regex_matches"),
+    [
+        (None, False),
+        (r"Output\(\)", True),
+        (r"Output", True),
+        (r"Output.*", True),
+        (r"what?", False),
+        (r"utput.*", True),
+        (r".*utput.*", True),
+        (r"put*", True),
+        (r".*put.*", True),
+        (r"put\(\)", True),
+        (r"put\(\)$", True),
+        (r"^put\(\)$", False),
+        (r"Output$", False),
+    ]
+)
+def test_regex2(strip_regex, regex_matches, keep_output, widget_notebook):
+    stripped = _stripout_helper(widget_notebook, strip_regex=strip_regex)
+    breakpoint()
+    assert 0

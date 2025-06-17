@@ -75,25 +75,25 @@ fn determine_keep_output(cell: &JSONMap, default: bool, strip_regex: Option<&Reg
 
     match strip_regex {
         Some(reg) => {
-            Ok(
-                cell
-                    .get("outputs")
-                    .and_then(|value| value.as_array())
-                    .ok_or_else(|| "Could not get cell outputs.".to_string())?
-                    .iter()
-                    .map(|output| {
-                        if output_matches_regex(output, reg).unwrap_or(false) {
-                            // If there's a regex match, that takes precedence over any other
-                            // options
-                            false
-                        } else if has_keep_output_tag || has_keep_output_metadata {
-                            true
-                        } else {
-                            default
-                        }
-                    })
-                    .collect()
-            )
+            let mut result = Vec::new();
+            let outputs = cell
+                .get("outputs")
+                .and_then(|value| value.as_array())
+                .ok_or("Could not get cell outputs.")?;
+
+            for output in outputs {
+                let obj = output.as_object().ok_or("Cell output is not a map; notebook is malformed.")?;
+                if output_matches_regex(obj, reg).unwrap_or(false) {
+                    // If there's a regex match, that takes precedence over any other
+                    // options
+                    result.push(false);
+                } else if has_keep_output_tag || has_keep_output_metadata {
+                    result.push(true);
+                } else {
+                    result.push(default);
+                }
+            }
+            Ok(result)
         },
         None => {
             // Regex not provided; if metadata or tags request we keep it, then keep it; otherwise
@@ -110,18 +110,40 @@ fn determine_keep_output(cell: &JSONMap, default: bool, strip_regex: Option<&Reg
 /// If a regex is specified, return true if it matches the output, and false otherwise.
 /// If a regex is not specified, return None.
 ///
-/// * `output`: Output value to be matched against the regex
+/// * `output`: Output map with text content to be matched against the regex
 /// * `strip_regex`: Regex to match the output against
-fn output_matches_regex(output: &serde_json::Value, strip_regex: &Regex) -> Result<bool, String> {
-    let data = output
-        .get("data")
-        .ok_or_else(|| "Could not get 'data' key of cell output.".to_string())?;
+fn output_matches_regex(
+    output: &JSONMap,
+    strip_regex: &Regex
+) -> Result<bool, String> {
+    let output_type = output
+        .get("output_type")
+        .ok_or("Cell output does not contain an output type; notebook data is malformed.")?
+        .as_str()
+        .ok_or("Cell output type is not a string; notebook data is malformed.")?;
+
+    let data = match output_type {
+        "stream" => {
+            output
+                .get("text")
+                .ok_or("Cell output of type 'stream' does not have 'text' key; notebook is malformed.")?
+        },
+        "display_data" | "execute_result" => {
+            output
+                .get("data")
+                .ok_or(format!("Cell output of type '{}' does not have 'data' key; notebook is malformed.", output_type))?
+                .get("text/plain")
+                .ok_or(format!("Cell output of type '{}' does not have 'text/plain' key in its 'data' value; notebook is malformed.", output_type))?
+        },
+        "error" => {
+            return Ok(false)
+        }
+        _ => return Err("Malformed cell output type.".to_string())
+    };
 
     let joined = data
-        .get("text")
-        .or_else(|| data.get("text/plain"))
-        .and_then(|text_obj| text_obj.as_array())
-        .ok_or_else(|| "Could not get contents of a cell output.".to_string())?
+        .as_array()
+        .ok_or("Could not get contents of a cell output.")?
         .iter()
         .map(|line| line.as_str().unwrap_or("").to_string())
         .collect::<Vec<String>>()
