@@ -54,7 +54,6 @@ fn determine_keep_output(cell: &JSONMap, default: bool, strip_regex: Option<&Reg
     let metadata = match cell.get("metadata").and_then(|value| value.as_object()) {
         Some(obj) => obj,
         None => return make_filled_output(default)
-
     };
 
     let has_keep_output_metadata = metadata.contains_key("keep_output");
@@ -83,16 +82,14 @@ fn determine_keep_output(cell: &JSONMap, default: bool, strip_regex: Option<&Reg
                     .ok_or_else(|| "Could not get cell outputs.".to_string())?
                     .iter()
                     .map(|output| {
-                        let matches = output_matches_regex(output, reg).unwrap_or(false);
-                        if has_keep_output_metadata || has_keep_output_tag {
-                            // Cell metadata or tags are requesting this output be kept, but
-                            // the regex takes precedence and strips outputs that match
-                            !matches
+                        if output_matches_regex(output, reg).unwrap_or(false) {
+                            // If there's a regex match, that takes precedence over any other
+                            // options
+                            false
+                        } else if has_keep_output_tag || has_keep_output_metadata {
+                            true
                         } else {
-                            // Neither cell metadata or tags are requesting this output be
-                            // kept. If no match is found, only keep cell output if that's
-                            // the default behavior
-                            !matches || default
+                            default
                         }
                     })
                     .collect()
@@ -116,14 +113,21 @@ fn determine_keep_output(cell: &JSONMap, default: bool, strip_regex: Option<&Reg
 /// * `output`: Output value to be matched against the regex
 /// * `strip_regex`: Regex to match the output against
 fn output_matches_regex(output: &serde_json::Value, strip_regex: &Regex) -> Result<bool, String> {
-    output
+    let data = output
+        .get("data")
+        .ok_or_else(|| "Could not get 'data' key of cell output.".to_string())?;
+
+    let joined = data
         .get("text")
-        .or_else(|| output.get("text/plain"))
+        .or_else(|| data.get("text/plain"))
         .and_then(|text_obj| text_obj.as_array())
-        .map(|arr| arr.iter().map(|line| line.as_str().unwrap_or("")).collect())
-        .map(|text_arr: Vec<&str>| text_arr.join(""))
-        .map(|text| strip_regex.is_match(&text))
-        .ok_or("Could not get contents of a cell output.".to_string())
+        .ok_or_else(|| "Could not get contents of a cell output.".to_string())?
+        .iter()
+        .map(|line| line.as_str().unwrap_or("").to_string())
+        .collect::<Vec<String>>()
+        .join("");
+
+    Ok(strip_regex.is_match(&joined))
 }
 
 // TODO: add custom errors instead of returning a string
@@ -147,7 +151,7 @@ pub fn strip_output(
     let mut cell_keys = Vec::<String>::new();
 
     let strip_regex_obj = strip_regex
-        .map(|s| Regex::new(s).map_err(|_| "Invalid".to_string()))
+        .map(|s| Regex::new(s).map_err(|_| format!("'{}' is not a valid regex.", s)))
         .transpose()?;
 
     let empty_json: serde_json::Value = serde_json::json!({});

@@ -10,7 +10,7 @@ mod python {
 
     /// Strips output from a notebook (string) and returns back a notebook (string)
     #[pyfunction]
-    #[pyo3(signature = (contents, keep_output, keep_count, extra_keys, drop_empty_cells, strip_regex = "^Output();?$".to_string()))]
+    #[pyo3(signature = (contents, keep_output, keep_count, extra_keys, drop_empty_cells, strip_regex = None))]
     fn stripout(
         contents: String,
         keep_output: bool,

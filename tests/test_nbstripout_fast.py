@@ -152,32 +152,59 @@ def test_source_as_strings():
 
 
 @pytest.mark.parametrize(
-    ("strip_regex", "is_stripped"),
+    "keep_output",
     [
-        (None, True),
-        ("Output()", True),
-        ("Output", True),
-        ("Output.*", True),
-        ("what?", False),
-        ("utput.*", True),
-        (".*utput.*", True),
-        ("put*", True),
-        (".*put.*", True),
-        ("put()", True),
-        ("put()$", True),
-        ("^put()$", False),
-        ("Output$", False),
+        True,
+        False,
     ]
 )
-def test_useless_widget_stripped(strip_regex, is_stripped):
-    """Check that useless ipywidget outputs get stripped."""
-    stripped_notebook = _stripout_helper(executed_nb, strip_regex=strip_regex)
+@pytest.mark.parametrize(
+    ("strip_regex", "regex_matches"),
+    [
+        (None, False),
+        (r"Output\(\)", True),
+        (r"Output", True),
+        (r"Output.*", True),
+        (r"what?", False),
+        (r"utput.*", True),
+        (r".*utput.*", True),
+        (r"put*", True),
+        (r".*put.*", True),
+        (r"put\(\)", True),
+        (r"put\(\)$", True),
+        (r"^put\(\)$", False),
+        (r"Output$", False),
+    ]
+)
+def test_regex(strip_regex, regex_matches, keep_output):
+    """Check that outputs matching the regex get stripped."""
+    stripped_notebook = _stripout_helper(executed_nb, strip_regex=strip_regex, keep_output=keep_output)
     assert len(executed_nb.cells[-2].outputs) > 0
-    assert len(stripped_notebook.cells[-2].outputs) == 0 if is_stripped else 1
+
+    if regex_matches:
+        # If there's a regex match, outputs get stripped regardless of keep_output
+        assert len(stripped_notebook.cells[-2].outputs) == 0
+    else:
+        if keep_output:
+            assert len(stripped_notebook.cells[-2].outputs) == 1
+        else:
+            assert len(stripped_notebook.cells[-2].outputs) == 0
 
 
-def test_useless_widget_stripped_no_regex():
-    """Check that useless ipywidget outputs get stripped if no regex is specified."""
-    stripped_notebook = _stripout_helper(executed_nb)
+@pytest.mark.parametrize(
+    "keep_output",
+    [
+        True,
+        False,
+    ]
+)
+def test_no_regex(keep_output):
+    """Check that outputs get stripped if no regex is specified."""
+    stripped_notebook = _stripout_helper(executed_nb, keep_output=keep_output)
     assert len(executed_nb.cells[-2].outputs) > 0
-    assert len(stripped_notebook.cells[-2].outputs) == 0
+    assert len(stripped_notebook.cells[-2].outputs) == 1 if keep_output else 0
+
+
+def test_regex_stripped2(widget_notebook):
+    stripped = _stripout_helper(widget_notebook)
+    pass
