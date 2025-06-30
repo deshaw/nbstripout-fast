@@ -83,7 +83,7 @@ fn determine_keep_output(cell: &JSONMap, default: bool, strip_regex: Option<&Reg
                 .ok_or("Could not get cell outputs.")?;
 
             for output in outputs {
-                let obj = output.as_object().ok_or("Cell output is not a map; notebook is malformed.")?;
+                let obj = output.as_object().ok_or("Cell output is not a JSON object; notebook is malformed.")?;
                 if output_matches_regex(obj, reg).unwrap_or(false) {
                     // If there's a regex match, that takes precedence over any other
                     // options

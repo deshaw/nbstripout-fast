@@ -81,6 +81,15 @@ This example illustrates how `nbstripout-fast` can be used to automatically clea
 	git add --renormalize . git commit -m "Cleaned Jupyter notebooks"
 	```
 
+## Stripping specific cell outputs
+
+To strip cell outputs that match a regular expression, the `--strip-regex`
+option can be used in combination with `--keep-output`. For example, to remove
+cell only outputs that include a notebook widget:
+
+```bash
+nbstripout-fast --keep-output --strip-regex "^Output()$"
+```
 
 ## Developing
 You can use cargo which will build + run the CLI:

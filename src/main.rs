@@ -79,7 +79,9 @@ struct Cli {
     ignore_git_nb_config: bool,
 
     #[clap(long, action)]
-    /// Specify a regex to use to strip matching output
+    /// Specify a regex to use to strip matching output. Even if other settings would keep
+    /// cell output (for example, if `--keep-output` is specified), matching cell outputs will be
+    /// stripped regardless.
     strip_regex: Option<String>,
 
     #[clap(parse(from_os_str))]
