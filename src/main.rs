@@ -81,7 +81,8 @@ struct Cli {
     #[clap(long, action)]
     /// Specify a regex to use to strip matching output. Even if other settings would keep
     /// cell output (for example, if `--keep-output` is specified), matching cell outputs will be
-    /// stripped regardless.
+    /// stripped regardless. The regex should adhere to rust's regex dialect; see
+    /// https://docs.rs/regex/latest/regex/ for more information.
     strip_regex: Option<String>,
 
     #[clap(parse(from_os_str))]
