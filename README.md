@@ -81,6 +81,24 @@ This example illustrates how `nbstripout-fast` can be used to automatically clea
 	git add --renormalize . git commit -m "Cleaned Jupyter notebooks"
 	```
 
+## Stripping specific cell outputs
+
+To strip cell outputs that match a regular expression, the `--strip-regex`
+option can be used in combination with `--keep-output`. For example, to remove
+cell outputs that only contain a notebook widget:
+
+```bash
+nbstripout-fast --keep-output --strip-regex "^Output\(\)$"
+```
+
+or to remove completed tqdm progress bars:
+
+```bash
+nbstripout-fast --keep-output --strip-regex "100%.*"
+```
+
+See the [documentation for `regex`](https://docs.rs/regex/latest/regex/) for
+information about supported regex syntax.
 
 ## Developing
 You can use cargo which will build + run the CLI:

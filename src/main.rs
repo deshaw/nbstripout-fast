@@ -78,6 +78,13 @@ struct Cli {
     /// Ignore settings from .git-nbconfig.yaml
     ignore_git_nb_config: bool,
 
+    #[clap(long, action)]
+    /// Specify a regex to use to strip matching output. Even if other settings would keep
+    /// cell output (for example, if `--keep-output` is specified), matching cell outputs will be
+    /// stripped regardless. The regex should adhere to rust's regex dialect; see
+    /// https://docs.rs/regex/latest/regex/ for more information.
+    strip_regex: Option<String>,
+
     #[clap(parse(from_os_str))]
     /// Files to strip output from
     files: Vec<PathBuf>,
@@ -137,6 +144,7 @@ fn process_file(
     keep_count: bool,
     extra_keys: &Vec<String>,
     drop_empty_cells: bool,
+    strip_regex: Option<&str>,
     output_file: Option<PathBuf>,
 ) -> Result<(), String> {
     let mut nb: serde_json::Value = serde_json::from_str(&contents)
@@ -148,6 +156,7 @@ fn process_file(
         keep_count,
         &extra_keys,
         drop_empty_cells,
+        strip_regex,
     )?;
 
     // Format with 1 space to match nbformat
@@ -190,6 +199,7 @@ fn main() -> Result<(), String> {
     let mut keep_output = false;
     let mut keep_count = false;
     let mut drop_empty_cells = false;
+    let strip_regex = args.strip_regex.as_deref();
 
     let mut extra_keys: Vec<String> = vec![];
     for key in DEFAULT_EXTRA_KEYS {
@@ -265,6 +275,7 @@ fn main() -> Result<(), String> {
             keep_count,
             &extra_keys,
             drop_empty_cells,
+            strip_regex,
             None,
         )?;
     } else {
@@ -285,6 +296,7 @@ fn main() -> Result<(), String> {
                 keep_count,
                 &extra_keys,
                 drop_empty_cells,
+                strip_regex,
                 output_file,
             )?;
         }

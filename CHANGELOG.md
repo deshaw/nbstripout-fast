@@ -1,3 +1,10 @@
+## [1.0.5](https://github.com/deshaw/nbstripout-fast/compare/v1.0.3...v1.0.4)(2025-06-30)
+### Added
+- Added the ability to specify a regex with `--strip-regex`. Outputs which match
+  this regex will be stripped unconditionally, even if `--keep-output` is
+  specified, allowing users to target specific outputs to remove
+  [#21](https://github.com/deshaw/nbstripout-fast/pull/21)
+
 ## [1.0.4](https://github.com/deshaw/nbstripout-fast/compare/v1.0.3...v1.0.4) (2024-05-03)
 ### Fixed
 - git worktree support
