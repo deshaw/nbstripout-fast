@@ -166,11 +166,12 @@ pub fn strip_output(
     strip_regex: Option<&str>,
 ) -> Result<bool, String> {
     log::debug!(
-        "keep-output: {}, keep-count: {}, extra-keys: {:?}, drop-empty-cells: {}",
+        "keep-output: {}, keep-count: {}, extra-keys: {:?}, drop-empty-cells: {}, strip-regex: {:?}",
         keep_output,
         keep_count,
         extra_keys,
-        drop_empty_cells
+        drop_empty_cells,
+        strip_regex
     );
     let mut metadata_keys = Vec::<String>::new();
     let mut cell_keys = Vec::<String>::new();
