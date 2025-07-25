@@ -97,6 +97,7 @@ struct NBConfigNBStripOutFastConfig {
     drop_empty_cells: Option<bool>,
     extra_keys: Option<Vec<String>>,
     keep_keys: Option<Vec<String>>,
+    strip_regex: Option<String>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -199,7 +200,7 @@ fn main() -> Result<(), String> {
     let mut keep_output = false;
     let mut keep_count = false;
     let mut drop_empty_cells = false;
-    let strip_regex = args.strip_regex.as_deref();
+    let mut strip_regex: Option<String> = args.strip_regex;
 
     let mut extra_keys: Vec<String> = vec![];
     for key in DEFAULT_EXTRA_KEYS {
@@ -212,6 +213,7 @@ fn main() -> Result<(), String> {
             keep_output = nbstripout_fast.keep_output.unwrap_or(keep_output);
             keep_count = nbstripout_fast.keep_count.unwrap_or(keep_count);
             drop_empty_cells = nbstripout_fast.drop_empty_cells.unwrap_or(drop_empty_cells);
+            strip_regex = strip_regex.or(nbstripout_fast.strip_regex);
             if let Some(config_extra_keys) = nbstripout_fast.extra_keys {
                 for key in config_extra_keys {
                     extra_keys.push(key.to_string());
@@ -260,10 +262,11 @@ fn main() -> Result<(), String> {
     }
 
     log::debug!(
-        "Using keep_count: {} keep_output: {} drop_empty_cells: {} extra_keys: {:?} ",
+        "Using keep_count: {} keep_output: {} drop_empty_cells: {} strip_regex: {:?} extra_keys: {:?} ",
         keep_count,
         keep_output,
         drop_empty_cells,
+        strip_regex,
         extra_keys
     );
     if args.files.is_empty() {
@@ -275,7 +278,7 @@ fn main() -> Result<(), String> {
             keep_count,
             &extra_keys,
             drop_empty_cells,
-            strip_regex,
+            strip_regex.as_deref(),
             None,
         )?;
     } else {
@@ -296,7 +299,7 @@ fn main() -> Result<(), String> {
                 keep_count,
                 &extra_keys,
                 drop_empty_cells,
-                strip_regex,
+                strip_regex.as_deref(),
                 output_file,
             )?;
         }
