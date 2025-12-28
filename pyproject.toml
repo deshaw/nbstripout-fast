@@ -9,6 +9,7 @@ readme = "README.md"
 author="Marc Udoff"
 author_email="marc.udoff@deshaw.com"
 url="https://github.com/deshaw/nbstripout-fast"
+license = {text = "BSD-3-Clause"}
 requires_python=">=3.9"
 setup_requires=[
     "pytest-runner",
@@ -22,6 +23,7 @@ classifiers=[
     "Environment :: Other Environment",
     "Framework :: IPython",
     "Intended Audience :: Developers",
+    "License :: OSI Approved :: BSD License",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
