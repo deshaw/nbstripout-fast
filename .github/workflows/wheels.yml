@@ -52,17 +52,21 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu, windows, macos]
+        os: [ubuntu, ubuntu-arm, windows, macos]
         python-version: ['cp312', 'cp311', 'cp310', 'cp39']
         include:
           - os: ubuntu
             platform: linux
             pip_cache: ~/.cache/pip
+          - os: ubuntu-arm
+            platform: linux-arm
+            pip_cache: ~/.cache/pip
+            runs_on: ubuntu-24.04-arm
           - os: windows
             ls: dir
             pip_cache: ~\AppData\Local\pip\Cache
 
-    runs-on: ${{ format('{0}-latest', matrix.os) }}
+    runs-on: ${{ matrix.runs_on || format('{0}-latest', matrix.os) }}
     steps:
     - name: Check out the repo
       uses: actions/checkout@v4
