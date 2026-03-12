@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Check out the repo
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: Set up rust toolchain
       uses: dtolnay/rust-toolchain@stable
@@ -24,7 +24,7 @@ jobs:
       uses: Swatinem/rust-cache@v2
 
     - name: Set up python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: '3.12'
 
@@ -41,7 +41,7 @@ jobs:
         twine check wheelhouse/*
 
     - name: Upload sdist
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: wheels-sdist
         path: ./wheelhouse/*.tar.gz
@@ -52,23 +52,27 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu, windows, macos]
+        os: [ubuntu, ubuntu-arm, windows, macos]
         python-version: ['cp312', 'cp311', 'cp310', 'cp39']
         include:
           - os: ubuntu
             platform: linux
             pip_cache: ~/.cache/pip
+          - os: ubuntu-arm
+            platform: linux-arm
+            pip_cache: ~/.cache/pip
+            runs_on: ubuntu-24.04-arm
           - os: windows
             ls: dir
             pip_cache: ~\AppData\Local\pip\Cache
 
-    runs-on: ${{ format('{0}-latest', matrix.os) }}
+    runs-on: ${{ matrix.runs_on || format('{0}-latest', matrix.os) }}
     steps:
     - name: Check out the repo
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: Set up python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: '3.12'
 
@@ -93,7 +97,7 @@ jobs:
         rustup target add i686-pc-windows-msvc
 
     - name: Build ${{ matrix.platform || matrix.os }} binaries
-      uses: pypa/cibuildwheel@v2.23.1
+      uses: pypa/cibuildwheel@v3.4.0
       env:
         CIBW_BUILD: '${{ matrix.python-version }}-*'
         # rust doesn't seem to be available for musl linux on i686
@@ -116,7 +120,7 @@ jobs:
         twine check wheelhouse/*
 
     - name: Upload wheels
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: wheels-${{ matrix.os }}-${{ matrix.python-version }}
         path: ./wheelhouse/*.whl
@@ -133,7 +137,7 @@ jobs:
       id-token: write
     steps:
       - name: Retrieve wheels and sdist
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: wheels-*
           merge-multiple: true
@@ -144,6 +148,6 @@ jobs:
           ls -lAs wheels/
 
       - name: Upload to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1.12
+        uses: pypa/gh-action-pypi-publish@release/v1.13
         with:
           packages_dir: wheels/
