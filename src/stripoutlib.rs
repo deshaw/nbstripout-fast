@@ -278,7 +278,11 @@ pub fn strip_output(
                 if !keep_count {
                     for output in outputs {
                         let obj = output.as_object_mut().expect("Output should be an object");
-                        obj.remove("execution_count");
+
+                        // Null (don't delete) execution_count to satisfy nbformat schema.
+                        if obj.contains_key("execution_count") {
+                            obj.insert("execution_count".to_string(), json!(null));
+                        }
                     }
                 }
             }
