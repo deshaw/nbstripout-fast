@@ -151,3 +151,4 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1.13
         with:
           packages_dir: wheels/
+          verbose: true
