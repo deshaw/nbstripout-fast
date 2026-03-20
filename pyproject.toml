@@ -34,6 +34,8 @@ classifiers=[
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
 ]
+dynamic = ['version']
+
 [project.urls]
 homepage = "https://github.com/deshaw/nbstripout-fast"
 

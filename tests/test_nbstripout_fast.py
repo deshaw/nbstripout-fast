@@ -95,6 +95,10 @@ def test_keep_output():
         cell.get("execution_count", None) is None for cell in stripped_notebook.cells
     )
     assert len(stripped_notebook.cells[-3]["outputs"]) == 1
+    
+    out = stripped_notebook.cells[-3]["outputs"][0]
+    assert out["output_type"] == "execute_result"
+    assert "execution_count" in out and out["execution_count"] is None
 
 
 def test_keep_count():
