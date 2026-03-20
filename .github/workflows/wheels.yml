@@ -48,12 +48,11 @@ jobs:
 
   build_wheels:
     name: >
-      build ${{ matrix.python-version }} on ${{ matrix.platform || matrix.os }}
+      build ${{ matrix.platform || matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu, ubuntu-arm, windows, macos]
-        python-version: ['cp312', 'cp311', 'cp310', 'cp39']
         include:
           - os: ubuntu
             platform: linux
@@ -99,9 +98,9 @@ jobs:
     - name: Build ${{ matrix.platform || matrix.os }} binaries
       uses: pypa/cibuildwheel@v3.4.0
       env:
-        CIBW_BUILD: '${{ matrix.python-version }}-*'
+        CIBW_BUILD: 'cp*'
         # rust doesn't seem to be available for musl linux on i686
-        CIBW_SKIP: '*-musllinux_i686'
+        CIBW_SKIP: '*-musllinux_i686 cp38* cp313* cp314*'
         # we build for matrix.arch (only exists on macos), else 'auto'
         CIBW_ARCHS: 'auto'
         CIBW_ENVIRONMENT: 'PATH="$HOME/.cargo/bin:$PATH" CARGO_TERM_COLOR="always"'
@@ -122,7 +121,7 @@ jobs:
     - name: Upload wheels
       uses: actions/upload-artifact@v7
       with:
-        name: wheels-${{ matrix.os }}-${{ matrix.python-version }}
+        name: wheels-${{ matrix.os }}
         path: ./wheelhouse/*.whl
 
   upload_to_pypi:
