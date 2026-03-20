@@ -8,7 +8,7 @@ This helps strip Jupyter Notebook output and metadata from notebooks. It is very
 and is highly configurable.
 
 ## Installation
-```
+```bash
 pip install nbstripout-fast
 ```
 
@@ -42,11 +42,33 @@ The table above shows a large overhead per notebook (mostly python startup time)
 When you have 100 or more notebooks, nbstripout takes more than 40s while
 nbstripout-fast takes only 1s!
 
-## Example
-This example illustrates how `nbstripout-fast` can be used to automatically clean Jupyter notebooks using Git filters (see e.g. [Git Attributes](https://git-scm.com/book/en/v2/Customizing-Git-Git-Attributes)). This keeps your repository clean by removing unnecessary output and clutter, while preserving your local working version. The benefits are minimised diffs and reduced repository size.
+## Examples
 
-1. **Install `nbstripout-fast`** as described above.
-2. **Configure nbstripout-fast**
+In the following, we consider two use cases of `nbstripout-fast`: using it as a **pre-commit hook** and as a **Git filter**.
+
+### Pre-commit hook example
+
+`nbstripout-fast` can be used as a [pre-commit](https://pre-commit.com/) to automatically clean outputs from Jupyter notebooks before each commit. Importantly, pre-commit hooks can also be integrated into [GitHub Actions](https://docs.github.com/en/actions) for enhanced CI/CD workflows as described in the documentation of [pre-commit action](https://github.com/pre-commit/action). Note that unlike Git filters, pre-commit hooks modify your local files.
+
+1. **Install `pre-commit`**
+    ```bash
+    pip install pre-commit
+    ```
+2. Add the `nbstripout-fast` hook to the `.pre-commit-config.yaml` file at the root of your repository: 
+    ```yaml
+    repos:
+      - repo: https://github.com/deshaw/nbstripout-fast
+        rev: v1.1.1
+        hooks:
+          - id: nbstripout-fast
+            name: nbstripout-fast
+            entry: nbstripout-fast
+            types: [jupyter]
+            language: python
+    ```
+    > **Note:** Even though `nbstripout-fast` is implemented in `Rust`, using `language: python` in your `.pre-commit-config.yaml` can be beneficial, as using `language: rust` forces pre-commit to build `nbstripout-fast` from source, which can fail on some platforms due to missing Python headers or mismatched toolchains.
+
+3. **Configure nbstripout-fast**
 
    Create a `.git-nbconfig.yaml` file at the root of your repository to configure `nbstripout-fast`, e.g.
 	```yaml
@@ -57,6 +79,17 @@ This example illustrates how `nbstripout-fast` can be used to automatically clea
 	  extra_keys: []
 	  keep_keys: []
 	```
+
+4. **Install the pre-commit hooks**
+    ```bash
+    pre-commit install
+    ```
+
+### Git filter example
+This example illustrates how `nbstripout-fast` can be used to automatically clean Jupyter notebooks using Git filters (see e.g. [Git Attributes](https://git-scm.com/book/en/v2/Customizing-Git-Git-Attributes)). This keeps your repository clean by removing unnecessary output and clutter, while preserving your local working version. The benefits are minimised diffs and reduced repository size.
+
+1. **Install `nbstripout-fast`** as described above.
+2. **Configure nbstripout-fast** (see example above)
 3. **Set Git Attributes**
 
    Create a `.gitattributes` file at the root of your repository if it doesn't yet exist and add this line:
@@ -102,12 +135,12 @@ information about supported regex syntax.
 
 ## Developing
 You can use cargo which will build + run the CLI:
-```
+```bash
 cargo run -- -t examples/example.ipynb
 ```
 
 You can also build with cargo and run the script with the full path:
-```
+```bash
 cargo build # dev build - ./target/debug/nbstripout-fast
 cargo build --release # release build - ./target/release/nbstripout-fast
 ```
@@ -117,7 +150,7 @@ maturin builds this repo to include pyo3 bindings by default. This allows
 for us to have an extension python extension mode as well. As of today, we can't
 have a binary and an extension, so we use the extension only for testing
 ([issue](https://github.com/PyO3/maturin/discussions/1006)).
-```
+```bash
 pip install -e .
 maturin develop
 # Should output, this way you can use RUST_LOG=debug
