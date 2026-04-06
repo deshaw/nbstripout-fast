@@ -4,7 +4,6 @@ mod stripoutlib;
 mod python {
     use pyo3::exceptions::PyRuntimeError;
     use pyo3::prelude::*;
-    use serde_json;
 
     use super::stripoutlib;
 

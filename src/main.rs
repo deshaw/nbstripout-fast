@@ -7,11 +7,8 @@
  * Note: Not all features were ported (e.g. zeppelin notebooks).
  */
 use clap::Parser;
-use log;
 use serde::Deserialize;
 use serde::Serialize;
-use serde_json;
-use serde_yaml;
 use std::env;
 use std::fs;
 use std::io;
@@ -148,14 +145,14 @@ fn process_file(
     strip_regex: Option<&str>,
     output_file: Option<PathBuf>,
 ) -> Result<(), String> {
-    let mut nb: serde_json::Value = serde_json::from_str(&contents)
+    let mut nb: serde_json::Value = serde_json::from_str(contents)
         .map_err(|e| format!("JSON was not well-formatted: {:?}", e))?;
 
     stripoutlib::strip_output(
         &mut nb,
         keep_output,
         keep_count,
-        &extra_keys,
+        extra_keys,
         drop_empty_cells,
         strip_regex,
     )?;
@@ -230,9 +227,7 @@ fn main() -> Result<(), String> {
 
     if let Some(extra_keys_str) = args.extra_keys {
         let cli_extra_keys: Vec<String> = extra_keys_str
-            .to_owned()
             .split_whitespace()
-            .into_iter()
             .map(|s| s.to_string())
             .collect();
         for key in cli_extra_keys {
@@ -241,9 +236,7 @@ fn main() -> Result<(), String> {
     }
     if let Some(cli_keep_keys_str) = args.keep_keys {
         let cli_keep_keys: Vec<String> = cli_keep_keys_str
-            .to_owned()
             .split_whitespace()
-            .into_iter()
             .map(|s| s.to_string())
             .collect();
         for key in cli_keep_keys {

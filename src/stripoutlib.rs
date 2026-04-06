@@ -1,5 +1,4 @@
 // This code is nearly a 1:1 mapping of https://github.com/kynan/nbstripout/blob/master/nbstripout/_utils.py
-use log;
 use regex::Regex;
 use serde_json::json;
 use std::borrow::Borrow;
@@ -20,11 +19,10 @@ fn pop_recursive(d: &mut serde_json::Value, key: &str) {
     if !key.contains(".") {
         return;
     }
-    let mut splitter = key.splitn(2, ".");
-    let key_head = splitter.next().unwrap();
-    let key_tail = splitter.next().unwrap();
+
+    let (key_head, key_tail) = key.split_once(".").unwrap();
     if obj.contains_key(key_head) {
-        pop_recursive(obj.get_mut(key_head).unwrap(), &key_tail)
+        pop_recursive(obj.get_mut(key_head).unwrap(), key_tail)
     }
 }
 
@@ -197,9 +195,7 @@ pub fn strip_output(
                 "extra key '{}' does not contain a . - must be of the form cell.foo or metadata.bar. Exiting...", key
             ));
         }
-        let mut splitter = key.splitn(2, ".");
-        let namespace = splitter.next().unwrap();
-        let subkey = splitter.next().unwrap();
+        let (namespace, subkey) = key.split_once(".").unwrap();
         if namespace == "metadata" {
             metadata_keys.push(subkey.to_string());
         } else if namespace == "cell" {
@@ -214,10 +210,11 @@ pub fn strip_output(
 
     // Remove all keys from metadata
     let metadata_option: Option<&mut serde_json::Value> = nb.get_mut("metadata");
-    if metadata_option.is_some() && !metadata_keys.is_empty() {
-        let metadata: &mut serde_json::Value = metadata_option.unwrap();
-        for field in metadata_keys {
-            pop_recursive(metadata, &field);
+    if !metadata_keys.is_empty() {
+        if let Some(metadata) = metadata_option {
+            for field in metadata_keys {
+                pop_recursive(metadata, &field);
+            }
         }
     }
 
@@ -232,13 +229,13 @@ pub fn strip_output(
                     cell.as_object().expect("Cell must be an object")["source"].borrow();
                 if source.is_array() {
                     // If any cell has a line that is not just whitespace, retain it
-                    return source
+                    source
                         .as_array()
                         .unwrap()
                         .iter()
-                        .any(|line| line.as_str().unwrap_or("").trim().len() > 0);
+                        .any(|line| !line.as_str().unwrap_or("").trim().is_empty())
                 } else if source.is_string() {
-                    return source.as_str().unwrap_or("").trim().len() > 0;
+                    !source.as_str().unwrap_or("").trim().is_empty()
                 } else {
                     panic!("Source must be an string or array: {:?}", source);
                 }
@@ -297,7 +294,7 @@ pub fn strip_output(
 
             // Always remove some metadata
             for field in &cell_keys {
-                pop_recursive(cell_object, &field);
+                pop_recursive(cell_object, field);
             }
         }
     }
