@@ -191,8 +191,12 @@ fn process_file(
 
 fn main() -> Result<(), String> {
     env_logger::init();
-    let config = find_nbconfig()?;
     let args = Cli::parse();
+    let config = if args.ignore_git_nb_config {
+        None
+    } else {
+        find_nbconfig()?
+    };
 
     let mut keep_output = false;
     let mut keep_count = false;
